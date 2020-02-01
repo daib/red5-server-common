@@ -50,6 +50,7 @@ import org.red5.server.api.stream.IStreamListener;
 import org.red5.server.api.stream.IStreamPacket;
 import org.red5.server.api.stream.StreamState;
 import org.red5.server.jmx.mxbeans.ClientBroadcastStreamMXBean;
+import org.red5.server.kafka.KafkaSourceListener;
 import org.red5.server.messaging.IConsumer;
 import org.red5.server.messaging.IFilter;
 import org.red5.server.messaging.IMessage;

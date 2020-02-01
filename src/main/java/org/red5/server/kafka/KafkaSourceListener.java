@@ -1,4 +1,4 @@
-package org.red5.server.stream;
+package org.red5.server.kafka;
 
 import org.red5.server.api.stream.IBroadcastStream;
 import org.red5.server.api.stream.IStreamListener;
