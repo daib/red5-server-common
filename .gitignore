@@ -18,3 +18,5 @@ log
 .idea
 red5-server-common.iml
 
+src/main/main.iml
+src/test/test.iml
