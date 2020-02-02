@@ -864,7 +864,6 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
             log.warn("Subscribe failed");
         }
 
-        addStreamListener(new KafkaSourceListener());
         setState(StreamState.STARTED);
     }
 
