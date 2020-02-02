@@ -184,6 +184,9 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
      * @param event
      *            Event
      */
+
+    private KafkaSourceListener kafkaSourceListener;
+
     private void checkSendNotifications(IEvent event) {
         IEventListener source = event.getSource();
         sendStartNotifications(source);
@@ -864,8 +867,9 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
         } else {
             log.warn("Subscribe failed");
         }
-
-        addStreamListener(new KafkaSourceListener());
+        //kafkaSourceListener = new KafkaSourceListener();
+        //kafkaSourceListener.init();
+        //addStreamListener(kafkaSourceListener);
         setState(StreamState.STARTED);
     }
 
