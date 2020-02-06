@@ -231,6 +231,7 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
      *            Event to dispatch
      */
     public void dispatchEvent(IEvent event) {
+        log.info("this is dispatchEvent ClientBroadcastStream");
         if (event instanceof IRTMPEvent && !closed.get()) {
             switch (event.getType()) {
                 case STREAM_CONTROL:
@@ -586,6 +587,8 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
      */
     @SuppressWarnings("unused")
     public void onPipeConnectionEvent(PipeConnectionEvent event) {
+        log.info("onPipeConnectionEvent");
+
         switch (event.getType()) {
             case PROVIDER_CONNECT_PUSH:
                 //log.debug("Provider connect");
