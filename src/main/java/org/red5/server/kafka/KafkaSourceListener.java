@@ -17,41 +17,34 @@ public class KafkaSourceListener implements IStreamListener {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaSourceListener.class);
 
-    private Properties propertiesProducer;
-
-    private KafkaProducer<String, byte[]> kafkaProducer;
+    private KafkaProducerWrapper kafkaProducer = null;
 
     private MessageByteSerializer messageByteSerializer;
 
     @Override
     public void packetReceived(IBroadcastStream stream, IStreamPacket packet) {
-        log.info("This is Kafka Source Listener");
-        byte[] data = messageByteSerializer.encode(packet);
-
-        ProducerRecord<String, byte[]> record = new ProducerRecord<String, byte[]>(stream.getPublishedName(), data);
-        kafkaProducer.send(record);
-        kafkaProducer.flush();
+        log.debug("KafkaSourceListener receives packet");
+        byte[] encodedPacket = messageByteSerializer.encode(packet);
+        //        log.info("KafkaSourceListener receives packet of size {}", encodedPacket.length);
+        kafkaProducer.send(stream.getPublishedName(), encodedPacket);
     }
 
     public void init(String bootstrapServer) {
-        log.info("init kafkasourcelistener");
+        log.info("Bootstrapserver: {}", bootstrapServer);
         //init producer
-        propertiesProducer = new Properties();
-        propertiesProducer.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServer);
-        propertiesProducer.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        propertiesProducer.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class.getName());
-        kafkaProducer = new KafkaProducer<String, byte[]>(propertiesProducer);
-
+        kafkaProducer = new KafkaProducerWrapper();
+        kafkaProducer.init(bootstrapServer);
         messageByteSerializer = new MessageByteSerializer();
-        log.info("end init kafkasourcelistener");
 
     }
 
     public void close() {
         kafkaProducer.close();
+        kafkaProducer = null;
     }
 
-    void createTopic(String topic) {
-        kafkaProducer.partitionsFor(topic);
+    public void createTopic(String topic) {
+        if (kafkaProducer != null)
+            kafkaProducer.creatTopic(topic);
     }
 }

@@ -1,10 +1,6 @@
 package org.red5.server.kafka;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.InvalidProtocolBufferException;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.red5.server.api.stream.IStreamPacket;
 import org.red5.server.kafka.KafkaProto.KafkaRTMPMessage;
@@ -13,24 +9,23 @@ import org.red5.server.net.rtmp.message.Constants;
 import org.red5.server.stream.message.RTMPMessage;
 
 public class MessageByteSerializer {
-    public byte[] encode(IStreamPacket packet) {
+    public static byte[] encode(IStreamPacket packet) {
         IoBuffer buf = packet.getData();
-        byte[] arr = new byte[buf.capacity()];
-        buf.clear();
-        buf.get(arr, 0, buf.capacity());
+        int len = buf.remaining();
+        byte[] arr = new byte[len];
+        buf.get(arr, 0, len);
         ByteString bufByteString = ByteString.copyFrom(arr);
 
         int timestamp = packet.getTimestamp();
 
-        int datatyte = packet.getDataType();
+        int dataTyte = packet.getDataType();
 
-        KafkaProto.KafkaRTMPMessage kafkaRTMPMessage = KafkaProto.KafkaRTMPMessage.newBuilder().setBuf(bufByteString).setDatatype(datatyte).setTimestamp(timestamp).build();
+        KafkaProto.KafkaRTMPMessage kafkaRTMPMessage = KafkaProto.KafkaRTMPMessage.newBuilder().setBuf(bufByteString).setDatatype(dataTyte).setTimestamp(timestamp).build();
 
-        byte[] data = kafkaRTMPMessage.toByteArray();
-        return data;
+        return kafkaRTMPMessage.toByteArray();
     }
 
-    public RTMPMessage decode(KafkaRTMPMessage kafkaRTMPMessage) {
+    public static RTMPMessage decode(KafkaRTMPMessage kafkaRTMPMessage) {
         IRTMPEvent event = null;
         RTMPMessage message = null;
 

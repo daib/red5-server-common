@@ -1,7 +1,14 @@
 package org.red5.server.stream;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import java.io.IOException;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.red5.server.kafka.KafkaConsumerWrapper;
+import org.red5.server.kafka.KafkaProto.KafkaRTMPMessage;
+import org.red5.server.kafka.MessageByteSerializer;
 import org.red5.server.messaging.IPipe;
 import org.red5.server.messaging.PipeConnectionEvent;
+import org.red5.server.stream.message.RTMPMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jmx.export.annotation.ManagedResource;
@@ -10,7 +17,7 @@ import org.springframework.jmx.export.annotation.ManagedResource;
  * This class reads from Kafka and broadcasts to subscribers
  */
 @ManagedResource(objectName = "org.red5.server:type=KafkaStreamBroadcaster", description = "KafkaStreamBroadcaster")
-public class KafkaStreamBroadcaster extends ClientBroadcastStream {
+public class KafkaStreamBroadcaster extends ClientToKafkaStream {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaStreamBroadcaster.class);
 
@@ -18,16 +25,11 @@ public class KafkaStreamBroadcaster extends ClientBroadcastStream {
 
     protected boolean broadcastFromKafka = true;
 
-    protected String kafkaBrokerAddress;
+    private boolean isStreamClosed = true;
 
-    /**
-     * @param kafkaBrokerAddress
-     *            the kafkaBrokerAddress to set
-     */
-    public void setKafkaBrokerAddress(String kafkaBrokerAddress) {
-        log.info("Setting kafka address {}", kafkaBrokerAddress);
-        this.kafkaBrokerAddress = kafkaBrokerAddress;
-    }
+    private KafkaConsumerWrapper kafkaConsumer = null;
+
+    KafkaPollingThread kafkaThread = null;
 
     /**
      * @param broadcastFromKafka
@@ -35,16 +37,19 @@ public class KafkaStreamBroadcaster extends ClientBroadcastStream {
      */
 
     public void setBroadcastFromKafka(boolean broadcastFromKafka) {
+        log.info("Broadcasting from Kafka: {}", broadcastFromKafka);
         this.broadcastFromKafka = broadcastFromKafka;
     }
 
-    public KafkaStreamBroadcaster() {
-        super();
-        init();
-    }
+    public void init(String bootstrapServer, String topic) {
+        log.info("Initializing {}", this.getClass());
+        kafkaConsumer = new KafkaConsumerWrapper();
+        kafkaConsumer.init(bootstrapServer, topic, topic);
 
-    public void init() {
-        //TODO: init the consumer and the thread to poll from Kafka and write to livePipe
+        isStreamClosed = false;
+
+        kafkaThread = new KafkaPollingThread();
+        kafkaThread.start();
     }
 
     @Override
@@ -55,6 +60,7 @@ public class KafkaStreamBroadcaster extends ClientBroadcastStream {
         // direct live broadcast within function dispatch
         if (broadcastFromKafka && livePipe != null) {
             cachedLivePipe = livePipe;
+            livePipe = null;
         }
     }
 
@@ -63,7 +69,57 @@ public class KafkaStreamBroadcaster extends ClientBroadcastStream {
         if (broadcastFromKafka && cachedLivePipe != null) {
             livePipe = cachedLivePipe;
             cachedLivePipe = null;
+
+            kafkaConsumer.close();
+            kafkaConsumer = null;
         }
+
+        isStreamClosed = true;
+
         super.close();
+    }
+
+    @Override
+    public void setPublishedName(String name) {
+        super.setPublishedName(name);
+
+        if (broadcastFromKafka) {
+            init(kafkaBrokerAddress, name);
+        }
+    }
+
+    //KafkaThread class
+    private class KafkaPollingThread extends Thread {
+        public void run() {
+            //run thread check livePipe
+            while (!isStreamClosed) {
+                if (cachedLivePipe != null) {
+                    //Creae RTMPMmessage
+                    ConsumerRecords<String, byte[]> records = kafkaConsumer.receive();
+                    records.forEach(record -> {
+                        byte[] data = record.value();
+                        try {
+                            KafkaRTMPMessage kafkaRTMPMessage = KafkaRTMPMessage.parseFrom(data);
+                            RTMPMessage msg = MessageByteSerializer.decode(kafkaRTMPMessage);
+                            cachedLivePipe.pushMessage(msg);
+                        } catch (InvalidProtocolBufferException e) {
+                            e.printStackTrace();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            stop();
+                        }
+                    });
+                } else {
+                    log.debug("Live pipe was null, message was not pushed");
+                }
+
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        }
     }
 }
