@@ -37,7 +37,7 @@ public class MyKafkaConsumer {
     }
 
     public ConsumerRecords<String, byte[]> receive() {
-        log.info("receive   MyKafkaConsumer");
+        //log.info("receive   MyKafkaConsumer");
         final int giveUp = 20;
         int noRecordsCount = 0;
 
