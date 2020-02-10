@@ -15,9 +15,13 @@ public class MessageByteSerializer {
 
         int timestamp = packet.getTimestamp();
 
-        int dataTyte = packet.getDataType();
+        int dataType = packet.getDataType();
 
-        KafkaProto.KafkaRTMPMessage kafkaRTMPMessage = KafkaProto.KafkaRTMPMessage.newBuilder().setBuf(bufByteString).setDatatype(dataTyte).setTimestamp(timestamp).build();
+        KafkaProto.KafkaRTMPMessage kafkaRTMPMessage = KafkaProto.KafkaRTMPMessage.newBuilder()
+            .setBuf(bufByteString)
+            .setDatatype(dataType)
+            .setTimestamp(timestamp)
+            .build();
 
         return kafkaRTMPMessage.toByteArray();
     }
