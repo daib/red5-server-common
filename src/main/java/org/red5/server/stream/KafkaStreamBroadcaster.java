@@ -94,7 +94,7 @@ public class KafkaStreamBroadcaster extends ClientToKafkaStream {
             //run thread check livePipe
             while (!isStreamClosed) {
                 if (cachedLivePipe != null) {
-                    //Creae RTMPMmessage
+                    //Create RTMPMmessage
                     ConsumerRecords<String, byte[]> records = kafkaConsumer.receive();
                     records.forEach(record -> {
                         byte[] data = record.value();
