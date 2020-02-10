@@ -1,10 +1,8 @@
 package org.red5.server.stream;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.IOException;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.red5.server.kafka.KafkaConsumerWrapper;
-import org.red5.server.kafka.KafkaProto.KafkaRTMPMessage;
 import org.red5.server.kafka.MessageByteConverter;
 import org.red5.server.messaging.IPipe;
 import org.red5.server.messaging.PipeConnectionEvent;
