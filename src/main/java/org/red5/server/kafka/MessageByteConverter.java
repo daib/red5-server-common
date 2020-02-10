@@ -1,6 +1,7 @@
 package org.red5.server.kafka;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.red5.server.api.stream.IStreamPacket;
 import org.red5.server.kafka.KafkaProto.KafkaRTMPMessage;
@@ -8,7 +9,7 @@ import org.red5.server.net.rtmp.event.*;
 import org.red5.server.net.rtmp.message.Constants;
 import org.red5.server.stream.message.RTMPMessage;
 
-public class MessageByteSerializer {
+public class MessageByteConverter {
     public static byte[] encode(IStreamPacket packet) {
         IoBuffer buf = packet.getData();
         ByteString bufByteString = ByteString.copyFrom(buf.buf());
@@ -17,24 +18,25 @@ public class MessageByteSerializer {
 
         int dataType = packet.getDataType();
 
-        KafkaProto.KafkaRTMPMessage kafkaRTMPMessage = KafkaProto.KafkaRTMPMessage.newBuilder()
-            .setBuf(bufByteString)
-            .setDatatype(dataType)
-            .setTimestamp(timestamp)
-            .build();
+        KafkaProto.KafkaRTMPMessage kafkaRTMPMessage = KafkaProto.KafkaRTMPMessage.newBuilder().setBuf(bufByteString).setDatatype(dataType).setTimestamp(timestamp).build();
 
         return kafkaRTMPMessage.toByteArray();
     }
 
-    public static RTMPMessage decode(KafkaRTMPMessage kafkaRTMPMessage) {
-        IRTMPEvent event = null;
+    public static RTMPMessage decode(byte[] data) {
+        KafkaRTMPMessage kafkaRTMPMessage;
+        try {
+            kafkaRTMPMessage = KafkaRTMPMessage.parseFrom(data);
+        } catch (InvalidProtocolBufferException e) {
+            e.printStackTrace();
+            return null;
+        }
+        IRTMPEvent event;
         RTMPMessage message = null;
 
         byte dataType = (byte) kafkaRTMPMessage.getDatatype();
         int timestamp = kafkaRTMPMessage.getTimestamp();
-        ByteString bufString = kafkaRTMPMessage.getBuf();
-        byte[] data = bufString.toByteArray();
-        IoBuffer buffer = IoBuffer.wrap(data);
+        IoBuffer buffer = IoBuffer.wrap(kafkaRTMPMessage.getBuf().toByteArray());
         int bufLimit = buffer.limit();
         if (bufLimit > 0) {
             switch (dataType) {

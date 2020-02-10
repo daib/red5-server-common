@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.red5.server.kafka.KafkaConsumerWrapper;
 import org.red5.server.kafka.KafkaProto.KafkaRTMPMessage;
-import org.red5.server.kafka.MessageByteSerializer;
+import org.red5.server.kafka.MessageByteConverter;
 import org.red5.server.messaging.IPipe;
 import org.red5.server.messaging.PipeConnectionEvent;
 import org.red5.server.stream.message.RTMPMessage;
@@ -97,16 +97,14 @@ public class KafkaStreamBroadcaster extends ClientToKafkaStream {
                     //Create RTMPMmessage
                     ConsumerRecords<String, byte[]> records = kafkaConsumer.receive();
                     records.forEach(record -> {
-                        byte[] data = record.value();
-                        try {
-                            KafkaRTMPMessage kafkaRTMPMessage = KafkaRTMPMessage.parseFrom(data);
-                            RTMPMessage msg = MessageByteSerializer.decode(kafkaRTMPMessage);
-                            cachedLivePipe.pushMessage(msg);
-                        } catch (InvalidProtocolBufferException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            stop();
+                        RTMPMessage msg = MessageByteConverter.decode(record.value());
+
+                        if (msg != null) {
+                            try {
+                                cachedLivePipe.pushMessage(msg);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
                         }
                     });
                 } else {
