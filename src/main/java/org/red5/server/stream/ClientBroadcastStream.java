@@ -863,7 +863,6 @@ public class ClientBroadcastStream extends AbstractClientStream implements IClie
         } else {
             log.warn("Subscribe failed");
         }
-
         setState(StreamState.STARTED);
     }
 
