@@ -11,10 +11,7 @@ import org.red5.server.stream.message.RTMPMessage;
 public class MessageByteSerializer {
     public static byte[] encode(IStreamPacket packet) {
         IoBuffer buf = packet.getData();
-        int len = buf.remaining();
-        byte[] arr = new byte[len];
-        buf.get(arr, 0, len);
-        ByteString bufByteString = ByteString.copyFrom(arr);
+        ByteString bufByteString = ByteString.copyFrom(buf.buf());
 
         int timestamp = packet.getTimestamp();
 

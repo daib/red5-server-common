@@ -45,7 +45,7 @@ public class KafkaProducerWrapper {
 
     public void creatTopic(String topic) {
         if (producer != null) {
-            log.info("Creationg topic {}", topic);
+            log.info("Creating topic {}", topic);
             producer.partitionsFor(topic);
         }
     }

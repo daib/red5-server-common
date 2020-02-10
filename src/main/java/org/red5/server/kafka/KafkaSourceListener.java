@@ -24,13 +24,11 @@ public class KafkaSourceListener implements IStreamListener {
     @Override
     public void packetReceived(IBroadcastStream stream, IStreamPacket packet) {
         log.debug("KafkaSourceListener receives packet");
-        byte[] encodedPacket = messageByteSerializer.encode(packet);
-        //        log.info("KafkaSourceListener receives packet of size {}", encodedPacket.length);
-        kafkaProducer.send(stream.getPublishedName(), encodedPacket);
+        kafkaProducer.send(stream.getPublishedName(), messageByteSerializer.encode(packet));
     }
 
     public void init(String bootstrapServer) {
-        log.info("Bootstrapserver: {}", bootstrapServer);
+        log.info("Bootstrap server: {}", bootstrapServer);
         //init producer
         kafkaProducer = new KafkaProducerWrapper();
         kafkaProducer.init(bootstrapServer);
